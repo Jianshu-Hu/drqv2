@@ -31,6 +31,13 @@ experiment: exp
 lr: 1e-4
 feature_dim: 50
 
+# augmentation
+aug_K: 1
+# KL regularization in actor training
+add_KL_loss: false
+# tangent prop
+tangent_prop: false
+
 agent:
   _target_: drqv2.DrQV2Agent
   obs_shape: ??? # to be specified later
@@ -45,6 +52,9 @@ agent:
   feature_dim: ${feature_dim}
   stddev_schedule: ${stddev_schedule}
   stddev_clip: 0.3
+  aug_K: ${aug_K}
+  add_KL_loss: ${add_KL_loss}
+  tangent_prop: ${tangent_prop}
 
 hydra:
   run:

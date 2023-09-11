@@ -1,0 +1,3 @@
+oarsub -p "host in ('eyrie', 'greyjoy', 'snow', 'tully', 'hornwood', 'manderly', 'cerwyn', 'umber', 'daenerys','martell','targaryen')" -l "host=1/cpu=1/gpuset=1",walltime=168:00:00 "bash /bigdata/jhu/drqv2/run_experiments/run_cluster_reach_duplo_drq_1.sh"
+oarsub -p "host in ('eyrie', 'greyjoy', 'snow', 'tully', 'hornwood', 'manderly', 'cerwyn', 'umber', 'daenerys')" -l "host=1/cpu=1/gpuset=1",walltime=168:00:00 "bash experiments/drac_aug2_bigfish_seed2.sh"
+oarsub -p "host in ('eyrie', 'greyjoy', 'snow', 'tully', 'hornwood', 'manderly', 'cerwyn', 'umber', 'daenerys')" -l "host=1/cpu=1/gpuset=1",walltime=168:00:00 "bash experiments/drac_aug2_

@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
 
 import utils
 
@@ -82,6 +83,14 @@ class Actor(nn.Module):
 
         self.apply(utils.weight_init)
 
+    def forward_mu_std(self, obs, std):
+        h = self.trunk(obs)
+
+        mu = self.policy(h)
+        mu = torch.tanh(mu)
+        std = torch.ones_like(mu) * std
+        return mu, std
+
     def forward(self, obs, std):
         h = self.trunk(obs)
 
@@ -124,7 +133,8 @@ class Critic(nn.Module):
 class DrQV2Agent:
     def __init__(self, obs_shape, action_shape, device, lr, feature_dim,
                  hidden_dim, critic_target_tau, num_expl_steps,
-                 update_every_steps, stddev_schedule, stddev_clip, use_tb):
+                 update_every_steps, stddev_schedule, stddev_clip, use_tb,
+                 aug_K, add_KL_loss, tangent_prop):
         self.device = device
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -151,6 +161,12 @@ class DrQV2Agent:
 
         # data augmentation
         self.aug = RandomShiftsAug(pad=4)
+        self.aug_K = aug_K
+
+        # KL regularization in actor training
+        self.add_KL_loss = add_KL_loss
+        # tangent prop regularization
+        self.tangent_prop = tangent_prop
 
         self.train()
         self.critic_target.train()
@@ -174,30 +190,92 @@ class DrQV2Agent:
                 action.uniform_(-1.0, 1.0)
         return action.cpu().numpy()[0]
 
-    def update_critic(self, obs, action, reward, discount, next_obs, step):
+    def tangent_vector(self, obs):
+        pad = nn.Sequential(torch.nn.ReplicationPad2d(1))
+        pad_obs = pad(obs)
+        index = np.random.randint(4, size=1)[0]
+        if index == 0:
+            # horizontal shift 1 pixel
+            obs_aug = torchvision.transforms.functional.crop(pad_obs, top=1, left=2, height=obs.shape[-1], width=obs.shape[-1])
+        elif index == 1:
+            # horizontal shift 1 pixel
+            obs_aug = torchvision.transforms.functional.crop(pad_obs, top=1, left=0, height=obs.shape[-1], width=obs.shape[-1])
+        elif index == 2:
+            # vertical shift 1 pixel
+            obs_aug = torchvision.transforms.functional.crop(pad_obs, top=2, left=1, height=obs.shape[-1], width=obs.shape[-1])
+        elif index == 3:
+            # vertical shift 1 pixel
+            obs_aug = torchvision.transforms.functional.crop(pad_obs, top=0, left=1, height=obs.shape[-1], width=obs.shape[-1])
+        tan_vector = obs_aug - obs
+        return tan_vector
+
+    def update_critic(self, obs, action, reward, discount, next_obs, step, obs_original):
         metrics = dict()
 
+        target_all = []
         with torch.no_grad():
-            stddev = utils.schedule(self.stddev_schedule, step)
-            dist = self.actor(next_obs, stddev)
-            next_action = dist.sample(clip=self.stddev_clip)
-            target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
-            target_V = torch.min(target_Q1, target_Q2)
-            target_Q = reward + (discount * target_V)
+            for k in range(self.aug_K):
+                stddev = utils.schedule(self.stddev_schedule, step)
+                dist = self.actor(next_obs[k], stddev)
+                next_action = dist.sample(clip=self.stddev_clip)
+                target_Q1, target_Q2 = self.critic_target(next_obs[k], next_action)
+                target_V = torch.min(target_Q1, target_Q2)
+                target_Q = reward + (discount * target_V)
+                target_all.append(target_Q)
+            avg_target_Q = sum(target_all)/self.aug_K
 
-        Q1, Q2 = self.critic(obs, action)
-        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+        if self.tangent_prop:
+            obs_aug_1 = self.aug(obs_original)
+            obs_aug_2 = self.aug(obs_original)
+            with torch.no_grad():
+                # calculate the tangent vector
+                tangent_vector1 = self.tangent_vector(obs_aug_1)
+                tangent_vector2 = self.tangent_vector(obs_aug_2)
+            obs_aug_1.requires_grad = True
+            obs_aug_2.requires_grad = True
+            # critic loss
+            Q1_aug_1, Q2_aug_1 = self.critic(self.encoder(obs_aug_1), action)
+            Q1_aug_2, Q2_aug_2 = self.critic(self.encoder(obs_aug_2), action)
+            critic_loss = F.mse_loss(Q1_aug_1, avg_target_Q) + F.mse_loss(Q2_aug_1, avg_target_Q)
+            critic_loss += F.mse_loss(Q1_aug_2, avg_target_Q) + F.mse_loss(Q2_aug_2, avg_target_Q)
+            avg_critic_loss = critic_loss / 2
+
+            # add regularization for tangent prop
+            # calculate the Jacobian matrix for non-linear model
+            Q1 = torch.min(Q1_aug_1, Q2_aug_1)
+            jacobian1 = torch.autograd.grad(outputs=Q1, inputs=obs_aug_1,
+                                           grad_outputs=torch.ones(Q1.size(), device=self.device),
+                                           retain_graph=True, create_graph=True)[0]
+            Q2 = torch.min(Q1_aug_2, Q2_aug_2)
+            jacobian2 = torch.autograd.grad(outputs=Q2, inputs=obs_aug_2,
+                                           grad_outputs=torch.ones(Q2.size(), device=self.device),
+                                           retain_graph=True, create_graph=True)[0]
+            tan_loss1 = torch.mean(torch.square(torch.sum((jacobian1 * tangent_vector1), (3, 2, 1))), dim=-1)
+            tan_loss2 = torch.mean(torch.square(torch.sum((jacobian2 * tangent_vector2), (3, 2, 1))), dim=-1)
+
+            tangent_prop_loss = tan_loss1+tan_loss2
+            avg_critic_loss += 0.1*tangent_prop_loss
+
+            if self.use_tb:
+                metrics['tangent_prop_loss'] = tangent_prop_loss.item()
+        else:
+            critic_loss_all = []
+            for k in range(self.aug_K):
+                Q1, Q2 = self.critic(obs[k], action)
+                critic_loss = F.mse_loss(Q1, avg_target_Q) + F.mse_loss(Q2, avg_target_Q)
+                critic_loss_all.append(critic_loss)
+            avg_critic_loss = sum(critic_loss_all) / self.aug_K
 
         if self.use_tb:
             metrics['critic_target_q'] = target_Q.mean().item()
             metrics['critic_q1'] = Q1.mean().item()
             metrics['critic_q2'] = Q2.mean().item()
-            metrics['critic_loss'] = critic_loss.item()
+            metrics['critic_loss'] = avg_critic_loss.item()
 
         # optimize encoder and critic
         self.encoder_opt.zero_grad(set_to_none=True)
         self.critic_opt.zero_grad(set_to_none=True)
-        critic_loss.backward()
+        avg_critic_loss.backward()
         self.critic_opt.step()
         self.encoder_opt.step()
 
@@ -207,13 +285,25 @@ class DrQV2Agent:
         metrics = dict()
 
         stddev = utils.schedule(self.stddev_schedule, step)
-        dist = self.actor(obs, stddev)
+        dist = self.actor(obs[0], stddev)
         action = dist.sample(clip=self.stddev_clip)
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
-        Q1, Q2 = self.critic(obs, action)
+        Q1, Q2 = self.critic(obs[0], action)
         Q = torch.min(Q1, Q2)
 
         actor_loss = -Q.mean()
+
+        if self.add_KL_loss:
+            # KL divergence between A(obs_aug_1) and A(obs_aug_2)
+            with torch.no_grad():
+                mu_aug_1, std_aug_1 = self.actor.forward_mu_std(obs[0], stddev)
+            mu_aug_2, std_aug_2 = self.actor.forward_mu_std(obs[1], stddev)
+            dist_aug_1 = torch.distributions.Normal(mu_aug_1, std_aug_1)
+            dist_aug_2 = torch.distributions.Normal(mu_aug_2, std_aug_2)
+
+            KL = torch.mean(torch.distributions.kl_divergence(dist_aug_1, dist_aug_2))
+            weighted_KL = 0.1 * KL
+            actor_loss += weighted_KL
 
         # optimize actor
         self.actor_opt.zero_grad(set_to_none=True)
@@ -224,6 +314,9 @@ class DrQV2Agent:
             metrics['actor_loss'] = actor_loss.item()
             metrics['actor_logprob'] = log_prob.mean().item()
             metrics['actor_ent'] = dist.entropy().sum(dim=-1).mean().item()
+            if self.add_KL_loss:
+                metrics['actor_KL_loss'] = KL.item()
+
 
         return metrics
 
@@ -238,22 +331,34 @@ class DrQV2Agent:
             batch, self.device)
 
         # augment
-        obs = self.aug(obs.float())
-        next_obs = self.aug(next_obs.float())
-        # encode
-        obs = self.encoder(obs)
-        with torch.no_grad():
-            next_obs = self.encoder(next_obs)
+        obs_all = []
+        next_obs_all = []
+        for k in range(self.aug_K):
+            obs_aug = self.aug(obs.float())
+            next_obs_aug = self.aug(next_obs.float())
+            # encoder
+            obs_all.append(self.encoder(obs_aug))
+            with torch.no_grad():
+                next_obs_all.append(self.encoder(next_obs_aug))
+        # # augment
+        # obs = self.aug(obs.float())
+        # next_obs = self.aug(next_obs.float())
+        # # encode
+        # obs = self.encoder(obs)
+        # with torch.no_grad():
+        #     next_obs = self.encoder(next_obs)
 
         if self.use_tb:
             metrics['batch_reward'] = reward.mean().item()
 
         # update critic
         metrics.update(
-            self.update_critic(obs, action, reward, discount, next_obs, step))
+            self.update_critic(obs_all, action, reward, discount, next_obs_all, step, obs.float()))
 
         # update actor
-        metrics.update(self.update_actor(obs.detach(), step))
+        for k in range(self.aug_K):
+            obs_all[k] = obs_all[k].detach()
+        metrics.update(self.update_actor(obs_all, step))
 
         # update critic target
         utils.soft_update_params(self.critic, self.critic_target,

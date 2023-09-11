@@ -107,14 +107,18 @@ class ReplayBuffer(IterableDataset):
             early_eps_fn = self._episode_fns.pop(0)
             early_eps = self._episodes.pop(early_eps_fn)
             self._size -= episode_len(early_eps)
-            early_eps_fn.unlink(missing_ok=True)
+            if early_eps_fn.exists():
+                early_eps_fn.unlink()
+            # early_eps_fn.unlink(missing_ok=True)
         self._episode_fns.append(eps_fn)
         self._episode_fns.sort()
         self._episodes[eps_fn] = episode
         self._size += eps_len
 
         if not self._save_snapshot:
-            eps_fn.unlink(missing_ok=True)
+            if eps_fn.exists():
+                eps_fn.unlink()
+            # eps_fn.unlink(missing_ok=True)
         return True
 
     def _try_fetch(self):
