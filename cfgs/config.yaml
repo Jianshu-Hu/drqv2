@@ -33,6 +33,8 @@ feature_dim: 50
 
 # augmentation
 aug_K: 1
+# data augmentation type
+aug_type: 1
 # KL regularization in actor training
 add_KL_loss: false
 # tangent prop
@@ -53,6 +55,7 @@ agent:
   stddev_schedule: ${stddev_schedule}
   stddev_clip: 0.3
   aug_K: ${aug_K}
+  aug_type: ${aug_type}
   add_KL_loss: ${add_KL_loss}
   tangent_prop: ${tangent_prop}
 
