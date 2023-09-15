@@ -40,6 +40,7 @@ class RandomShiftsAug(nn.Module):
 
 class DataAug(nn.Module):
     def __init__(self, da_type):
+        super().__init__()
         self.data_aug_type = da_type
         if self.data_aug_type == 1:
             # random shift

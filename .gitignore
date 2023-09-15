@@ -10,3 +10,5 @@ exp_drqv2_*.py
 dmc_benchmarks.py
 check_sweep.py
 cancel_sweep.py
+saved_figs
+saved_exps
