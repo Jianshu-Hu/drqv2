@@ -32,7 +32,7 @@ def average_over_several_runs(folder):
 
 
 def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_save='save', title=""):
-    # plt.rcParams["figure.figsize"] = (8, 8)
+    plt.rcParams["figure.figsize"] = (5, 4)
     fig, axs = plt.subplots(1, 1)
     for i in range(len(folders)):
         folder_name = 'saved_exps/'+prefix+folders[i]
