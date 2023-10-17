@@ -14,7 +14,7 @@ echo "identifier $identifier: task=$task, aug_type=$aug_type, seed=$seed, num_tr
 current_date=$(date +%Y.%m.%d)
 source_folder="exp_local/$current_date"
 
-# python train.py task=$task experiment=$task aug_type=$aug_type seed=$seed replay_buffer_num_workers=$replay_buffer_num_workers num_train_frames=$num_train_frames
+python train.py task=$task experiment=$task aug_type=$aug_type seed=$seed replay_buffer_num_workers=$replay_buffer_num_workers num_train_frames=$num_train_frames
 
 save_results_foler="saved_exps"
 if [ ! -d "$save_results_foler" ]; then
