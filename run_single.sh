@@ -16,13 +16,13 @@ if [ ! -d "$save_results_foler" ]; then
     echo "Created save results folder: $save_results_foler"
 fi
 
-if [ ! -d "$save_results_foler/$task-$identifier" ]; then
-    mkdir "$save_results_foler/$task-$identifier"
-    echo "Created save results folder: $save_results_foler//$task-$identifier"
+if [ ! -d "$save_results_foler/$task-$seed-$identifier" ]; then
+    mkdir "$save_results_foler/$task-$seed-$identifier"
+    echo "Created save results folder: $save_results_foler//$task-$seed-$identifier"
 fi
 
 current_date=$(date +%Y.%m.%d)
 source_folder="exp_local/$current_date"
 
-mkdir "$save_results_foler/$task-$identifier/aug$aug_type"
-mv $source_folder/* $save_results_foler/$task-$identifier/aug$aug_type/
+mkdir "$save_results_foler/$task-$seed-$identifier/aug$aug_type"
+mv $source_folder/* $save_results_foler/$task-$seed-$identifier/aug$aug_type/
