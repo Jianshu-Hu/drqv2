@@ -2,7 +2,7 @@
 task=$1
 seed=$2
 num_train_frames=1000000
-replay_buffer_num_workers=4
+replay_buffer_num_workers=1
 
 echo "-------------------------------------------------"
 echo "task=$task, seed=$seed, num_train_frames=$num_train_frames, replay_buffer_num_workers=$replay_buffer_num_workers"
