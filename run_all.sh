@@ -1,4 +1,7 @@
 #!/bin/bash
+source /bigdata/users/jhu/anaconda3/bin/activate
+conda activate equiRL
+
 bash run_single.sh acrobot_swingup 42
 bash run_single.sh acrobot_swingup 43
 bash run_single.sh acrobot_swingup 44
