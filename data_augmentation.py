@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import kornia
 
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
@@ -45,6 +45,8 @@ class DataAug(nn.Module):
         if self.data_aug_type == 1:
             # random shift
             self.aug = RandomShiftsAug(4)
+        elif self.data_aug_type == 2:
+            self.aug = kornia.augmentation.RandomRotation(degrees=180., p=1., same_on_batch=False)
 
     def forward(self, x):
         return self.aug(x)
