@@ -71,67 +71,18 @@ def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_
     else:
         plt.savefig('saved_figs/'+title)
 
-
-prefix = 'quadruped_walk/'
-title = "quadruped_walk"
-action_repeat = 2
-folders_1 = ["random_shift", "color_shift"]
-label_list = ["random_shift", "color_shift"]
-plot_several_folders(prefix, folders_1, action_repeat, title=title, label_list=label_list)
-
-prefix = 'quadruped_walk/'
-title = "quadruped_walk2"
-action_repeat = 2
-folders_1 = ["random_shift", "color_shift"]
-label_list = ["random_shift", "color_shift"]
-plot_several_folders(prefix, folders_1, action_repeat, title=title, label_list=label_list)
-
-# prefix = 'quadruped_run/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='quadruped_run', label_list=label_list)
-
-# prefix = 'reach_duplo/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='reach_duplo', label_list=label_list)
-
-# prefix = 'hopper_hop/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='hopper_hop', label_list=label_list)
-
-
-# prefix = 'acrobot_swingup/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='acrobot_swingup', label_list=label_list)
-
-# prefix = 'reacher_hard/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='reacher_hard', label_list=label_list)
-
-# prefix = 'finger_turn_hard/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='finger_turn_hard', label_list=label_list)
-
-# prefix = 'walker_run/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='walker_run', label_list=label_list)
-
-# prefix = 'finger_spin/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='finger_spin', label_list=label_list)
-
-# prefix = 'cheetah_run/'
-# action_repeat = 2
-# folders_1 = ['drqv2', 'drqv2_aug_2_add_KL_add_tangent']
-# plot_several_folders(prefix, folders_1, action_repeat, title='cheetah_run', label_list=label_list)
-
-
-
-
+seeds = [42, 43, 44, 45, 46]
+tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
+aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+aug_folders = [f'aug{i}' for i in aug_ind]
+labels = ["rand_shift","rand_shear","rand_noise",
+          "rand_color_sft","rand_color_scl","color_inv",
+          "rand_hue_sft", "rand_sat_scl", "guass_blur",
+          "ker_aug", "rand_cutout"]
+identifier = ""
+for task in tasks:
+    for seed in  seeds:
+        prefix = f"{task}-{seed}-{identifier}"
+        title = f"{task}_seed_{seed}_identifier_{identifier}"
+        action_repeat = 2
+        plot_several_folders(prefix, aug_folders, action_repeat, title=title, label_list=labels)
