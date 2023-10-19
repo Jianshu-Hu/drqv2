@@ -1,0 +1,3 @@
+oarsub -p "host in ('cerwyn','umber','hornwood', 'manderly', 'snow', 'greyjoy', 'tully', 'eyrie', 'daenerys','martell','targaryen','lannister')" -l host=1/gpuset=1/cpu=1,walltime=168:00:00 "bash /bigdata/users/ve490-fall23/lyf/drqv2/run_experiments/lyf_experiments/run_cluster_reacher_hard_drq_1.sh"
+
+oarsub -p "gpudevice is not null and host='martell'" -I 
