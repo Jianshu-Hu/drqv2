@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /bigdata/users/ve490-fall23/lyf/drqv2/
+cd /tmp/ve490-fall23/lyf/drqv2/
 source /bigdata/users/jhu/anaconda3/bin/activate
 conda activate equiRL
 

@@ -83,6 +83,12 @@ class DataAug(nn.Module):
         elif self.data_aug_type == 2:
             self.aug = kornia.augmentation.RandomRotation(degrees=180., p=1., same_on_batch=False)
         elif self.data_aug_type == 3:
+            self.aug = kornia.augmentation.RandomVerticalFlip(p=.5, same_on_batch=False)
+        elif self.data_aug_type == 4:
+            self.aug = kornia.augmentation.RandomHorizontalFlip(p=.5, same_on_batch=False)
+        elif self.data_aug_type == 5:
+            self.aug = GridMask(grid_m=8, grid_n=8)
+        elif self.data_aug_type == 6:
             self.aug = HideandSeek(grid_m=8, grid_n=8, p=0.4)
 
     def forward(self, x):
