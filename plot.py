@@ -35,7 +35,7 @@ def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_
     # plt.rcParams["figure.figsize"] = (8, 8)
     fig, axs = plt.subplots(1, 1)
     for i in range(len(folders)):
-        folder_name = 'saved_exps/'+prefix+folders[i]
+        folder_name = 'saved_exps2/'+prefix+folders[i]
         num_runs = len(os.listdir(folder_name))
         mean_all, std_all, eval_freq = average_over_several_runs(folder_name)
         for j in range(len(eval_env_type)):
@@ -71,8 +71,6 @@ def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_
     else:
         plt.savefig('saved_figs/'+title)
 
-# seeds = [42, 43, 44, 45, 46]
-seeds = [42, 44, 45, 46]
 # tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
 tasks = ["acrobot_swingup", "reacher_hard"]
 aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -83,8 +81,7 @@ labels = ["rand_shift","rand_shear","rand_noise",
           "ker_aug", "rand_cutout"]
 identifier = "a"
 for task in tasks:
-    for seed in  seeds:
-        prefix = f"{task}-{seed}-{identifier}/"
-        title = f"{task}_seed_{seed}_identifier_{identifier}"
-        action_repeat = 2
-        plot_several_folders(prefix, aug_folders, action_repeat, title=title, label_list=labels)
+    prefix = f"{task}-{identifier}/"
+    title = f"{task}_identifier_{identifier}"
+    action_repeat = 2
+    plot_several_folders(prefix, aug_folders, action_repeat, title=title, label_list=labels)
