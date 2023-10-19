@@ -71,18 +71,20 @@ def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_
     else:
         plt.savefig('saved_figs/'+title)
 
-seeds = [42, 43, 44, 45, 46]
-tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
+# seeds = [42, 43, 44, 45, 46]
+seeds = [42]
+# tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
+tasks = ["acrobot_swingup"]
 aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 aug_folders = [f'aug{i}' for i in aug_ind]
 labels = ["rand_shift","rand_shear","rand_noise",
           "rand_color_sft","rand_color_scl","color_inv",
           "rand_hue_sft", "rand_sat_scl", "guass_blur",
           "ker_aug", "rand_cutout"]
-identifier = ""
+identifier = "a"
 for task in tasks:
     for seed in  seeds:
-        prefix = f"{task}-{seed}-{identifier}"
+        prefix = f"{task}-{seed}-{identifier}/"
         title = f"{task}_seed_{seed}_identifier_{identifier}"
         action_repeat = 2
         plot_several_folders(prefix, aug_folders, action_repeat, title=title, label_list=labels)
