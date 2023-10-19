@@ -124,29 +124,6 @@ class ColorInversionAug(nn.Module):
         color_max = 1 if self.float_tensor else 255
         return (color_max - x).to(x.dtype)
 
-class DRQRandomHueShiftingAug(nn.Module):
-    def __init__(self, magnitude_interval=(0, 0.1), float_tensor=True):
-        super().__init__()
-        self.magnitude_interval = magnitude_interval
-        self.float_tensor = float_tensor
-
-    def single_forward(self, x):
-        hsv = rgb_to_hsv(x) if self.float_tensor else rgb_to_hsv(x / 255)
-        shift = (
-            torch.rand(1, device=x.device, dtype=x.dtype)
-            * (self.magnitude_interval[1] - self.magnitude_interval[0])
-            + self.magnitude_interval[0]
-        ).item()
-        hsv[:, 0, :, :] = (hsv[:, 0, :, :] + shift) % 1
-        return (
-            hsv_to_rgb(hsv) if self.float_tensor else (hsv_to_rgb(hsv) * 255).round()
-        ).to(x.dtype)
-    
-    def forward(self, x):
-        transformed_imgs = (self.single_forward(x[:,0:3,:,:]), self.single_forward(x[:,3:6,:,:]), self.single_forward(x[:,6:9,:,:]))
-        return torch.cat(transformed_imgs, dim=1)
-
-import math
 
 
 import math
