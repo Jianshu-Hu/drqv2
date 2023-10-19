@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import kornia
+import numpy as np
 
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
@@ -37,6 +38,40 @@ class RandomShiftsAug(nn.Module):
                              padding_mode='zeros',
                              align_corners=False)
 
+class GridMask():
+    def __init__(self, grid_m=8, grid_n=8) -> None:
+        self.m=grid_m
+        self.n=grid_n
+    
+    def __call__(self, inputs):
+        inputs = inputs.clone()
+        for k, input in enumerate(inputs):
+            h, w = input.shape[1:]  # input.shape = (3, 32, 32)
+            cell_h = h // self.m
+            cell_w = w // self.n
+            for i in range(self.m):
+                for j in range(self.n):
+                    if (i+j)%2==0:
+                        inputs[k][:, i*cell_h:(i+1)*cell_h, j*cell_w:(j+1)*cell_w] = 0
+        return inputs
+
+class HideandSeek(GridMask):
+    def __init__(self, grid_m=8, grid_n=8, p=0.4) -> None:
+        super().__init__(grid_m, grid_n)
+        self.p=p
+    
+    def __call__(self, inputs):
+        inputs = inputs.clone()
+        for k, input in enumerate(inputs):
+            h, w = input.shape[1:]  # input.shape = (3, 32, 32)
+            cell_h = h // self.m
+            cell_w = w // self.n
+            for i in range(self.m):
+                for j in range(self.n):
+                    prob=np.random.rand()
+                    if (i+j)%2==0 and prob<self.p:
+                        inputs[k][:, i*cell_h:(i+1)*cell_h, j*cell_w:(j+1)*cell_w] = 0
+        return inputs
 
 class DataAug(nn.Module):
     def __init__(self, da_type):
@@ -47,6 +82,8 @@ class DataAug(nn.Module):
             self.aug = RandomShiftsAug(4)
         elif self.data_aug_type == 2:
             self.aug = kornia.augmentation.RandomRotation(degrees=180., p=1., same_on_batch=False)
+        elif self.data_aug_type == 3:
+            self.aug = HideandSeek(grid_m=8, grid_n=8, p=0.4)
 
     def forward(self, x):
         return self.aug(x)
