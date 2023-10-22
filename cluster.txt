@@ -1,4 +1,8 @@
-oarsub -p "host in ('cerwyn','umber','hornwood', 'manderly', 'snow', 'greyjoy', 'tully', 'eyrie', 'daenerys','martell','targaryen','lannister')" -l host=1/gpuset=1/cpu=1,walltime=168:00:00 "bash /bigdata/users/ve490-fall23/lyf/drqv2/run_experiments/lyf_experiments/run_cluster_reacher_hard_drq_1.sh"
+ssh ve490-fall23@aaal.ji.sjtu.edu.cn
+ah3Rtzk9briRbTuErsjekVYp
+
+
+oarsub -p "host in ('cerwyn','umber','hornwood', 'manderly', 'snow', 'greyjoy', 'tully', 'eyrie', 'daenerys','martell','targaryen','lannister')" -l host=1/gpuset=1/cpu=1,walltime=168:00:00 "bash /bigdata/users/ve490-fall23/lyf/drqv2/run_experiments/lyf_experiments/run_cluster_walker_run_drq_1.sh"
 
 oarsub -p "gpudevice is not null and host='martell'" -I 
 
@@ -6,3 +10,11 @@ ah3Rtzk9briRbTuErsjekVYp
 
 87949 reacher_hard randomrotation 180 014903
 87950 reacher_hard randomroatation 5 015544
+
+88046 acro 180
+88047 walker 180
+88048 acro 5
+88049 walker 5
+
+exp_local 180
+exp_local_2 5
