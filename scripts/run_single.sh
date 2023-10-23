@@ -1,4 +1,7 @@
 #!/bin/bash
+source /bigdata/users/jhu/anaconda3/bin/activate
+conda activate equiRL
+
 identifier=$1
 task=$2
 aug_type=$3
