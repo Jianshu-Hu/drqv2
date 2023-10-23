@@ -4,7 +4,7 @@ import math
 import os
 
 # eval_env_type = ['normal', 'color_hard', 'video_easy', 'video_hard']
-eval_env_type = ['normal']
+eval_env_type = ["normal"]
 
 
 def average_over_several_runs(folder):
@@ -15,9 +15,11 @@ def average_over_several_runs(folder):
         min_length = np.inf
         runs = os.listdir(folder)
         for i in range(len(runs)):
-            data = np.loadtxt(folder+'/'+runs[i]+'/eval.csv', delimiter=',', skiprows=1)
-            evaluation_freq = data[2, -3]-data[1, -3]
-            data_all.append(data[:, 2+env_type])
+            data = np.loadtxt(
+                folder + "/" + runs[i] + "/eval.csv", delimiter=",", skiprows=1
+            )
+            evaluation_freq = data[2, -3] - data[1, -3]
+            data_all.append(data[:, 2 + env_type])
             if data.shape[0] < min_length:
                 min_length = data.shape[0]
         average = np.zeros([len(runs), min_length])
@@ -28,60 +30,90 @@ def average_over_several_runs(folder):
         std = np.std(average, axis=0)
         std_all.append(std)
 
-    return mean_all, std_all, evaluation_freq/1000
+    return mean_all, std_all, evaluation_freq / 1000
 
 
-def plot_several_folders(prefix, folders, action_repeat, label_list=[], plot_or_save='save', title=""):
+def plot_several_folders(
+    prefix, folders, action_repeat, label_list=[], plot_or_save="save", title=""
+):
     # plt.rcParams["figure.figsize"] = (8, 8)
     fig, axs = plt.subplots(1, 1)
     for i in range(len(folders)):
-        folder_name = 'saved_exps/'+prefix+folders[i]
+        folder_name = "saved_exps/" + prefix + folders[i]
         num_runs = len(os.listdir(folder_name))
         mean_all, std_all, eval_freq = average_over_several_runs(folder_name)
         for j in range(len(eval_env_type)):
             if len(eval_env_type) == 1:
                 axs_plot = axs
             else:
-                axs_plot = axs[int(j/2)][j-2*(int(j/2))]
+                axs_plot = axs[int(j / 2)][j - 2 * (int(j / 2))]
             # plot variance
-            if label_list[i] == 'ours':
-                axs_plot.fill_between(eval_freq*range(len(mean_all[j])),
-                        mean_all[j] - std_all[j]/math.sqrt(num_runs),
-                        mean_all[j] + std_all[j]/math.sqrt(num_runs), alpha=0.4, color='C3')
+            if label_list[i] == "ours":
+                axs_plot.fill_between(
+                    eval_freq * range(len(mean_all[j])),
+                    mean_all[j] - std_all[j] / math.sqrt(num_runs),
+                    mean_all[j] + std_all[j] / math.sqrt(num_runs),
+                    alpha=0.4,
+                    color="C3",
+                )
             else:
-                axs_plot.fill_between(eval_freq*range(len(mean_all[j])),
-                        mean_all[j] - std_all[j]/math.sqrt(num_runs),
-                        mean_all[j] + std_all[j]/math.sqrt(num_runs), alpha=0.4)
+                axs_plot.fill_between(
+                    eval_freq * range(len(mean_all[j])),
+                    mean_all[j] - std_all[j] / math.sqrt(num_runs),
+                    mean_all[j] + std_all[j] / math.sqrt(num_runs),
+                    alpha=0.4,
+                )
             if len(label_list) == len(folders):
                 # specify label
-                if label_list[i] == 'ours':
-                    axs_plot.plot(eval_freq*range(len(mean_all[j])), mean_all[j], label=label_list[i], color='C3')
+                if label_list[i] == "ours":
+                    axs_plot.plot(
+                        eval_freq * range(len(mean_all[j])),
+                        mean_all[j],
+                        label=label_list[i],
+                        color="C3",
+                    )
                 else:
-                    axs_plot.plot(eval_freq * range(len(mean_all[j])), mean_all[j], label=label_list[i])
+                    axs_plot.plot(
+                        eval_freq * range(len(mean_all[j])),
+                        mean_all[j],
+                        label=label_list[i],
+                    )
             else:
-                axs_plot.plot(eval_freq*range(len(mean_all[j])), mean_all[j], label=folders[i])
+                axs_plot.plot(
+                    eval_freq * range(len(mean_all[j])), mean_all[j], label=folders[i]
+                )
 
-            axs_plot.set_xlabel('evaluation steps(x1000)')
-            axs_plot.set_ylabel('episode reward')
+            axs_plot.set_xlabel("evaluation steps(x1000)")
+            axs_plot.set_ylabel("episode reward")
             axs_plot.legend(fontsize=10)
             # axs_plot.set_title(eval_env_type[j])
             axs_plot.set_title(title)
-    if plot_or_save == 'plot':
+    if plot_or_save == "plot":
         plt.show()
     else:
-        plt.savefig('saved_figs/'+title)
+        plt.savefig("saved_figs/" + title)
 
-# tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
-tasks = ["acrobot_swingup", "reacher_hard"]
-aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-aug_folders = [f'aug{i}' for i in aug_ind]
-labels = ["rand_shift","rand_shear","rand_noise",
-          "rand_color_sft","rand_color_scl","color_inv",
-          "rand_hue_sft", "rand_sat_scl", "guass_blur",
-          "ker_aug", "rand_cutout"]
-identifier = "a"
+
+tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
+aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+aug_folders = [f"aug{i}" for i in aug_ind]
+labels = [
+    "rand_shift",
+    "rand_shear1",
+    "rand_shear2",
+    "rand_shear3",
+    "rand_shear4",
+    "rand_shear5",
+    "rand_shear6",
+    "rand_shear7",
+    "rand_shear8",
+    "rand_shear9",
+]
+identifier = "b"
 for task in tasks:
-    prefix = f"{task}-{identifier}/"
-    title = f"{task}_identifier_{identifier}"
+    prefix = f"{identifier}-{task}/"
+    title = f"{identifier}_{task}"
     action_repeat = 2
-    plot_several_folders(prefix, aug_folders, action_repeat, title=title, label_list=labels)
+    plot_several_folders(
+        prefix, aug_folders, action_repeat, title=title, label_list=labels
+    )
