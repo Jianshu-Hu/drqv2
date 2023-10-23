@@ -1,3 +1,4 @@
+#!/bin/bash
 identifier=$1
 task=$2
 aug_type=$3
