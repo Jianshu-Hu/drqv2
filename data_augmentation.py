@@ -65,6 +65,29 @@ class RandomShearingAug(nn.Module):
         )
         return F.grid_sample(x, sheared, align_corners=False, padding_mode="zeros")
 
+class CombinedRandomShearingAug(nn.Module):
+    def __init__(self, magnitude_interval_horizontal=(-1, 1), magnitude_interval_vertical=(-1, 1)):
+        super().__init__()
+        self.magnitude_interval_horizontal = magnitude_interval_horizontal
+        self.magnitude_interval_vertical = magnitude_interval_vertical
+
+    def forward(self, x):
+        n = x.size(0)
+        shear_factor_horizontal = torch.rand(1, device=x.device, dtype=x.dtype).item() * (
+            self.magnitude_interval_horizontal[1] - self.magnitude_interval_horizontal[0]
+        ) + self.magnitude_interval_horizontal[0]
+        shear_factor_vertical = torch.rand(1, device=x.device, dtype=x.dtype).item() * (
+            self.magnitude_interval_vertical[1] - self.magnitude_interval_vertical[0]
+        ) + self.magnitude_interval_vertical[0]
+        shear_tensor = torch.tensor([[1, shear_factor_horizontal, 0], [shear_factor_vertical, 1, 0]], device=x.device)
+
+        sheared = F.affine_grid(
+            shear_tensor.repeat(n, 1, 1),
+            x.size(),
+            align_corners=False,
+        )
+        return F.grid_sample(x, sheared, align_corners=False, padding_mode="zeros")
+
 class RandomNoiseInjectionAug(nn.Module):
     def __init__(self, magnitude_interval=(0, 0.1), float_tensor=True):
         super().__init__()
@@ -237,10 +260,11 @@ class DRQRandomCutOutAug(nn.Module):
         )
         return torch.cat(transformed_imgs, dim=1)
 
-augmentations = [RandomShiftsAug(4), RandomShearingAug(), RandomNoiseInjectionAug((-20,20),False),
-                 RandomColorShiftingAug((-90,130),False), RandomColorScalingAug((0.1,1),False), ColorInversionAug(False),
-                 DRQRandomHueShiftingAug((0, 2 * math.pi), False), DRQRandomSaturationScalingAug((0, 1), False), GaussianBlurAug(5, 1, False),
-                 KernelAug(torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]), False), DRQRandomCutOutAug((32,32), (0, 0, 0), False)]
+# identifier b
+augmentations = [RandomShiftsAug(4),
+                 CombinedRandomShearingAug((-1,-1/3),(-1,-1/3)), CombinedRandomShearingAug((-1,-1/3),(-1/3,1/3)), CombinedRandomShearingAug((-1,-1/3),(1/3,1)),
+                 CombinedRandomShearingAug((-1/3,1/3),(-1,-1/3)), CombinedRandomShearingAug((-1/3,1/3),(-1/3,1/3)), CombinedRandomShearingAug((-1/3,1/3),(1/3,1)),
+                  CombinedRandomShearingAug((1/3,1),(-1,-1/3)), CombinedRandomShearingAug((1/3,1),(-1/3,1/3)), CombinedRandomShearingAug((1/3,1),(1/3,1)) ]
 
 class DataAug(nn.Module):
     def __init__(self, da_type):
