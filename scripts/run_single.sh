@@ -1,7 +1,8 @@
 #!/bin/bash
-source /bigdata/users/jhu/anaconda3/bin/activate
-conda activate equiRL
 
+ori_dir=$(pwd)
+
+# prepare saved_exps
 identifier=$1
 task=$2
 aug_type=$3
@@ -31,6 +32,23 @@ if [ ! -d "$aug_dir" ]; then
     echo "Created aug_dir: $aug_dir"
 fi
 
+# prepare tmp environment
+$tmp_dir="/tmp/drqv2-xcc"
+if [ ! -d "$tmp_dir" ]; then
+    mkdir $tmp_dir
+    echo "Created tmp_dir: $tmp_dir"
+fi
+cp -r cfgs $tmp_dir
+cp -r curves $tmp_dir
+cp *.py $tmp_dir
+cp *.yml $tmp_dir
+
+cd $tmp_dir
+
+source /bigdata/users/jhu/anaconda3/bin/activate
+conda activate equiRL
+
+# run experiments
 current_date=$(date +%Y.%m.%d)
 source_folder="exp_local/$current_date"
 
@@ -41,7 +59,12 @@ do
     echo "Done running task $task with aug_type $aug_type and seed $seed"
 done
 
+# move results back
 find_aug_type="*aug_type=$aug_type*"
 find_task="*task=$task*"
 result_folders=$(find $source_folder -type d -name $find_aug_type -name $find_task)
-mv $result_folders $aug_dir
+mv $result_folders $ori_dir/$aug_dir
+
+# clear up tmp environment
+cd $ori_dir
+rm -r $tmp_dir
