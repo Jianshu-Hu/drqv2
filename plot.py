@@ -95,19 +95,11 @@ def plot_several_folders(
 
 
 tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
-aug_ind = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+aug_ind = [1, 2]
 aug_folders = [f"aug{i}" for i in aug_ind]
 labels = [
     "rand_shift",
-    "rand_shear1",
-    "rand_shear2",
-    "rand_shear3",
-    "rand_shear4",
-    "rand_shear5",
-    "rand_shear6",
-    "rand_shear7",
-    "rand_shear8",
-    "rand_shear9",
+    "rand_shear",
 ]
 identifier = "b"
 for task in tasks:

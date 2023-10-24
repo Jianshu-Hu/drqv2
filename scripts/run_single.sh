@@ -33,15 +33,15 @@ if [ ! -d "$aug_dir" ]; then
 fi
 
 # prepare tmp environment
-$tmp_dir="/tmp/drqv2-xcc"
+tmp_dir="/tmp/drqv2-xcc-$identifier"
 if [ ! -d "$tmp_dir" ]; then
     mkdir $tmp_dir
     echo "Created tmp_dir: $tmp_dir"
+    cp -r cfgs $tmp_dir
+    cp -r curves $tmp_dir
+    cp *.py $tmp_dir
+    cp *.yml $tmp_dir
 fi
-cp -r cfgs $tmp_dir
-cp -r curves $tmp_dir
-cp *.py $tmp_dir
-cp *.yml $tmp_dir
 
 cd $tmp_dir
 
@@ -63,8 +63,4 @@ done
 find_aug_type="*aug_type=$aug_type*"
 find_task="*task=$task*"
 result_folders=$(find $source_folder -type d -name $find_aug_type -name $find_task)
-mv $result_folders $ori_dir/$aug_dir
-
-# clear up tmp environment
-cd $ori_dir
-rm -r $tmp_dir
+cp -r $tmp_dir/$result_folders $ori_dir/$aug_dir
