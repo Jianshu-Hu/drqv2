@@ -101,7 +101,7 @@ labels = [
     "rand_shift",
     "rand_shear",
 ]
-identifier = "b"
+identifier = "c"
 for task in tasks:
     prefix = f"{identifier}-{task}/"
     title = f"{identifier}_{task}"
