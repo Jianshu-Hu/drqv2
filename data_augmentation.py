@@ -74,14 +74,15 @@ class HideandSeek(GridMask):
         return inputs
 
 class DataAug(nn.Module):
-    def __init__(self, da_type):
+    def __init__(self, da_type, da_degree):
         super().__init__()
         self.data_aug_type = da_type
+        self.data_aug_degree = da_degree
         if self.data_aug_type == 1:
             # random shift
             self.aug = RandomShiftsAug(4)
         elif self.data_aug_type == 2:
-            self.aug = kornia.augmentation.RandomRotation(degrees=180., p=1., same_on_batch=False)
+            self.aug = kornia.augmentation.RandomRotation(degrees=self.data_aug_degree, p=1., same_on_batch=False)
         elif self.data_aug_type == 3:
             self.aug = kornia.augmentation.RandomVerticalFlip(p=.5, same_on_batch=False)
         elif self.data_aug_type == 4:

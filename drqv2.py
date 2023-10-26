@@ -100,7 +100,7 @@ class DrQV2Agent:
     def __init__(self, obs_shape, action_shape, device, lr, feature_dim,
                  hidden_dim, critic_target_tau, num_expl_steps,
                  update_every_steps, stddev_schedule, stddev_clip, use_tb,
-                 aug_K, aug_type, add_KL_loss, tangent_prop):
+                 aug_K, aug_type, aug_degree, add_KL_loss, tangent_prop):
         self.device = device
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -126,7 +126,7 @@ class DrQV2Agent:
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
         # data augmentation
-        self.aug = data_augmentation.DataAug(da_type=aug_type)
+        self.aug = data_augmentation.DataAug(da_type=aug_type, da_degree=aug_degree)
         self.aug_K = aug_K
 
         # KL regularization in actor training

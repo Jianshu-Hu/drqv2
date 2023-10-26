@@ -35,6 +35,7 @@ feature_dim: 50
 aug_K: 1
 # data augmentation type
 aug_type: 1
+aug_degree: 180
 # KL regularization in actor training
 add_KL_loss: false
 # tangent prop
