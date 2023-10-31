@@ -8,6 +8,11 @@ import cv2
 import math
 
 
+class NoAug(nn.Module):
+    def forward(self, x):
+        return x
+
+
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -294,10 +299,40 @@ class DRQRandomCutOutAug(nn.Module):
         return torch.cat(transformed_imgs, dim=1)
 
 
+class RandomScaleAug(nn.Module):
+    def __init__(self, scale_interval=(0.8, 1.2), float_tensor=True):
+        super().__init__()
+        self.scale_interval = scale_interval
+        self.float_tensor = float_tensor
+
+    def forward(self, x):
+        scale = (
+            torch.rand(1, device=x.device, dtype=x.dtype)
+            * (self.scale_interval[1] - self.scale_interval[0])
+            + self.scale_interval[0]
+        ).item()
+        # scale with respect to center, padding with 0
+        n, _, h, _ = x.size()
+        padding = tuple([0] * 4)
+        new_x = F.pad(x, padding, "constant", 0)
+        eps = 1.0 / (h + 2 * 0)
+        arange = torch.linspace(
+            -1.0 + eps, 1.0 - eps, h + 2 * 0, device=x.device, dtype=x.dtype
+        )[:h]
+        arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
+        base_grid = torch.cat([arange, arange.transpose(1, 0)], dim=2)
+        base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
+        grid = base_grid / scale
+        return F.grid_sample(new_x, grid, padding_mode="zeros", align_corners=False)
+
+
 # identifier c
 augmentations = [
     RandomShiftsAug(4),
     CombinedRandomShearingAug((-1 / 3, 1 / 3), (-1 / 3, 1 / 3)),
+    RandomShearingAug("horizontal", (-1, 1)),
+    NoAug(),
+    RandomScaleAug((0.8, 1.25), False),
 ]
 
 

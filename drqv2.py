@@ -30,6 +30,7 @@ class Encoder(nn.Module):
     def forward(self, obs):
         obs = obs / 255.0 - 0.5
         h = self.convnet(obs)
+        # visualize feature map
         h = h.view(h.shape[0], -1)
         return h
 
