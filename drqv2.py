@@ -55,7 +55,7 @@ class Encoder(nn.Module):
 
         self.apply(utils.weight_init)
         
-        self.feat_map_recorder = FeatMapRecorder(5000, 'feat_map')
+        self.feat_map_recorder = FeatMapRecorder(50000, 'feat_map')
 
     def forward(self, obs):
         obs = obs / 255.0 - 0.5

@@ -1,6 +1,10 @@
 import torch.nn as nn
 
-feat_augmentations = []
+class NoAug(nn.Module):
+    def forward(self, x):
+        return x
+
+feat_augmentations = [NoAug()]
 
 class FeatAug(nn.Module):
     def __init__(self, aug_type):
