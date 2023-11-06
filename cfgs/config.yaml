@@ -35,6 +35,8 @@ feature_dim: 50
 aug_K: 1
 # data augmentation type
 aug_type: 1
+# feature map augmentation type
+feat_aug_type: 1
 # KL regularization in actor training
 add_KL_loss: false
 # tangent prop
@@ -58,6 +60,7 @@ agent:
   aug_type: ${aug_type}
   add_KL_loss: ${add_KL_loss}
   tangent_prop: ${tangent_prop}
+  feat_aug_type: ${feat_aug_type}
 
 hydra:
   run:

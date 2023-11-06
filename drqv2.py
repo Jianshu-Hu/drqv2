@@ -9,8 +9,36 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import data_augmentation
+import feature_augmentation
 import utils
 
+import matplotlib.pyplot as plt
+import os
+import imageio
+
+#identifier d
+class FeatMapRecorder:
+    def __init__(self, episodes_per_record, save_dir):
+        self.episode_per_record = episodes_per_record
+        self.episode_counter = 0
+        self.save_dir = save_dir
+        self.fig, self.axs = plt.subplots(4, 8, figsize=(10, 5))
+
+    def record_feat_map(self, feat_map, obs):
+        if self.episode_counter % self.episode_per_record != 0:
+            self.episode_counter += 1
+            return
+        
+        for i in range(4):
+            for j in range(8):
+                self.axs[i, j].imshow(feat_map[0, i*8+j, :, :], cmap='gray')
+                self.axs[i, j].axis('off')
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
+        self.fig.savefig(self.save_dir + '/feat_map_step' + str(self.episode_counter) + '.png', bbox_inches='tight', pad_inches=0)
+        imageio.imwrite(self.save_dir + '/obs_step' + str(self.episode_counter) + '.png', (obs[0,0:3,:,:].transpose(1,2,0) * 255).astype(np.uint8))
+
+        self.episode_counter += 1
 
 class Encoder(nn.Module):
     def __init__(self, obs_shape):
@@ -26,11 +54,14 @@ class Encoder(nn.Module):
                                      nn.ReLU())
 
         self.apply(utils.weight_init)
+        
+        self.feat_map_recorder = FeatMapRecorder(5000, 'feat_map')
 
     def forward(self, obs):
         obs = obs / 255.0 - 0.5
         h = self.convnet(obs)
         # visualize feature map
+        self.feat_map_recorder.record_feat_map(h.detach().cpu().numpy(), obs.detach().cpu().numpy())
         h = h.view(h.shape[0], -1)
         return h
 
@@ -101,7 +132,7 @@ class DrQV2Agent:
     def __init__(self, obs_shape, action_shape, device, lr, feature_dim,
                  hidden_dim, critic_target_tau, num_expl_steps,
                  update_every_steps, stddev_schedule, stddev_clip, use_tb,
-                 aug_K, aug_type, add_KL_loss, tangent_prop):
+                 aug_K, aug_type, add_KL_loss, tangent_prop, feat_aug_type):
         self.device = device
         self.critic_target_tau = critic_target_tau
         self.update_every_steps = update_every_steps
@@ -128,6 +159,7 @@ class DrQV2Agent:
 
         # data augmentation
         self.aug = data_augmentation.DataAug(da_type=aug_type)
+        self.feat_aug = feature_augmentation.FeatAug(aug_type=feat_aug_type)
         self.aug_K = aug_K
 
         # KL regularization in actor training
@@ -297,16 +329,16 @@ class DrQV2Agent:
         obs, action, reward, discount, next_obs = utils.to_torch(
             batch, self.device)
 
-        # augment
+        # augment (original imgs)
         obs_all = []
         next_obs_all = []
         for k in range(self.aug_K):
-            obs_aug = self.aug(obs.float())
-            next_obs_aug = self.aug(next_obs.float())
+            obs_aug = self.aug(obs.float()) # comment out
+            next_obs_aug = self.aug(next_obs.float()) # comment out
             # encoder
-            obs_all.append(self.encoder(obs_aug))
+            obs_all.append(self.feat_aug(self.encoder(obs_aug)))
             with torch.no_grad():
-                next_obs_all.append(self.encoder(next_obs_aug))
+                next_obs_all.append(self.feat_aug(self.encoder(next_obs_aug)))
         # # augment
         # obs = self.aug(obs.float())
         # next_obs = self.aug(next_obs.float())
