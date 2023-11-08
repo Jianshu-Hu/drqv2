@@ -326,12 +326,12 @@ class RandomScaleAug(nn.Module):
         return F.grid_sample(new_x, grid, padding_mode="zeros", align_corners=False)
 
 
-# identifier c
+# identifier e
 augmentations = [
+    NoAug(),
     RandomShiftsAug(4),
     CombinedRandomShearingAug((-1 / 3, 1 / 3), (-1 / 3, 1 / 3)),
     RandomShearingAug("horizontal", (-1, 1)),
-    NoAug(),
     RandomScaleAug((0.8, 1.25), False),
 ]
 
