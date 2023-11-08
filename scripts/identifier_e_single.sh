@@ -56,20 +56,32 @@ cd $tmp_dir
 source /bigdata/users/jhu/anaconda3/bin/activate
 conda activate equiRL
 
-# run experiment
+# remove redundant results
 current_date=$(date +%Y.%m.%d)
 source_folder="exp_local/$current_date"
-python train.py task=$task experiment=$task aug_type=$aug_type feat_aug_type=$feat_aug_type seed=$seed replay_buffer_num_workers=$replay_buffer_num_workers num_train_frames=$num_train_frames
 
-# move results back
 find_aug_type="*aug_type=$aug_type*"
 find_feat_aug_type="*feat_aug_type=$feat_aug_type*"
 find_task="*task=$task*"
 result_folders=$(find $source_folder -type d -name $find_aug_type -name $find_feat_aug_type -name $find_task)
-cp -r $tmp_dir/$result_folders $ori_dir/$aug_dir
-
+for result_folder in $result_folders
+do
+    echo "rm -rf $result_folder"
+    rm -rf $result_folder
+done
 find_seed="*seed=$seed*"
 result_folder=$(find $source_folder -type d -name $find_aug_type -name $find_feat_aug_type -name $find_seed -name $find_task | head -n 1)
+if [ -d "$result_folder" ]; then
+    echo "rm -rf $result_folder"
+    rm -rf $result_folder
+fi
+
+# run experiment
+python train.py task=$task experiment=$task aug_type=$aug_type feat_aug_type=$feat_aug_type seed=$seed replay_buffer_num_workers=$replay_buffer_num_workers num_train_frames=$num_train_frames
+
+# move results back
+cp -r $tmp_dir/$result_folders $ori_dir/$aug_dir
+
 result_pngs=$(find $result_folder -name "*step*.png")
 cp $result_pngs $ori_dir/$figs_target_dir
 
