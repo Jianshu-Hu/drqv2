@@ -94,13 +94,13 @@ def plot_several_folders(
         plt.savefig("saved_figs/" + title)
 
 
-tasks = ["walker_run"]
-feat_aug_ind = [3, 5]
+tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
+feat_aug_ind = [2, 3, 4, 5]
 aug_folders = [f"aug1-feat_aug{i}" for i in feat_aug_ind]
 labels = [
-    # "lix",
+    "lix",
     "rand_shear",
-    # "rand_w_mean",
+    "rand_w_mean",
     "rand_white",
 ]
 identifier = "e"

@@ -2,7 +2,7 @@
 identifier="e"
 tasks=("walker_run")
 aug_types=(1)
-feat_aug_types=(2 4)
+feat_aug_types=(4)
 seeds=(1 2 3)
 
 for task in "${tasks[@]}"

@@ -73,6 +73,7 @@ class CombinedRandomShearingAug(nn.Module):
         )
         return F.grid_sample(x, sheared, align_corners=False, padding_mode="zeros")
 
+# 相似平均 权重动态调整
 class RandomWeightedMeanAug(nn.Module):
     def __init__(self, major_weight_range=(0.95, 0.99)):
         super().__init__()
