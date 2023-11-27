@@ -1,9 +1,9 @@
 #!/bin/bash
 identifier="e"
-tasks=("walker_run")
+tasks=("acrobot_swingup")
 aug_types=(1)
-feat_aug_types=(4)
-seeds=(1 2 3)
+feat_aug_types=(6)
+seeds=(3)
 
 for task in "${tasks[@]}"
 do

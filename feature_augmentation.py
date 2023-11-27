@@ -127,7 +127,63 @@ class RandomWhiteGenAug(nn.Module):
         result += noise_map
         return result
     
-feat_augmentations = [NoAug(), LIXAug(1), CombinedRandomShearingAug((-1 / 3, 1 / 3), (-1 / 3, 1 / 3)), RandomWeightedMeanAug((0.95,0.99)), RandomWhiteGenAug(ratio_interval=(0.2,0.3), noise_count=3)]
+class RandomPadResizeAug(nn.Module):
+    def __init__(self, pad_interval=(0, 10)):
+        super().__init__()
+        assert pad_interval[0] <= pad_interval[1] and pad_interval[0] >= 0
+        self.pad_interval = pad_interval
+        
+
+    def forward(self, x):
+        _, _, h, w = x.size()
+        # randomly pad left right top bottom of x with zeros
+        pad_left = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_right = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_top = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_bottom = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+
+        result = F.pad(x, (pad_left, pad_right, pad_top, pad_bottom), "constant", 0)
+
+        # resize result to original size
+        result = F.interpolate(result, size=(h, w), mode='nearest')
+
+        return result
+    
+class RandomWhiteGenAugEnhanced(nn.Module):
+    def __init__(self, ratio_interval=(0.05, 0.1), noise_count_interval=(1,5), h_margins=(5, 5), w_margins=(5, 5)):
+        super().__init__()
+        assert ratio_interval[0] <= ratio_interval[1] and ratio_interval[0] >= 0 and ratio_interval[1] <= 1
+        assert noise_count_interval[0] <= noise_count_interval[1] and noise_count_interval[0] >= 0
+        assert h_margins[0] > 0 and h_margins[1] > 0 and w_margins[0] > 0 and w_margins[1] > 0
+        self.ratio_interval = ratio_interval
+        self.noise_count_interval = noise_count_interval
+        self.h_margins = h_margins
+        self.w_margins = w_margins
+
+    def forward(self, x):
+        _, c, h, w = x.size()
+        result = x.clone()
+        white_max, _ = torch.max(x[:, :, :, :].view(x.shape[0], c, -1), dim=2, keepdim=True)
+        white_max = white_max.view(x.shape[0], c)
+        white_noise = white_max * (
+            torch.rand(1, device=x.device, dtype=x.dtype).item() * (
+                self.ratio_interval[1] - self.ratio_interval[0]
+            ) + self.ratio_interval[0]
+        )
+        # for every channel in noise_map, choose a random position and add white_noise, repeat for noise_count times
+        noise_count = torch.randint(self.noise_count_interval[0], self.noise_count_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        noise_map = torch.zeros_like(x, device=x.device, dtype=x.dtype)
+        h_interval = [(0, self.h_margins[0]), (h - self.h_margins[1], h)]
+        h_interval = h_interval[torch.randint(0, 2, size=(1,), device=x.device, dtype=torch.int64).item()]
+        w_interval = [(0, self.w_margins[0]), (w - self.w_margins[1], w)]
+        w_interval = w_interval[torch.randint(0, 2, size=(1,), device=x.device, dtype=torch.int64).item()]
+        h_indices = torch.randint(h_interval[0], h_interval[1], size=(noise_count,), device=x.device, dtype=torch.int64)
+        w_indices = torch.randint(w_interval[0], w_interval[1], size=(noise_count,), device=x.device, dtype=torch.int64)
+        noise_map[:, :, h_indices, w_indices] += white_noise.view(x.shape[0], c, 1)
+        result += noise_map
+        return result
+
+feat_augmentations = [NoAug(), LIXAug(1), CombinedRandomShearingAug((-1 / 3, 1 / 3), (-1 / 3, 1 / 3)), RandomWeightedMeanAug((0.95,0.99)), RandomWhiteGenAug(ratio_interval=(0.2,0.3), noise_count=3), RandomPadResizeAug(pad_interval=(0,10)), RandomWhiteGenAugEnhanced(),]
 
 
 class FeatAug(nn.Module):

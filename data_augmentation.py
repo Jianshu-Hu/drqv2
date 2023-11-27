@@ -325,6 +325,27 @@ class RandomScaleAug(nn.Module):
         grid = base_grid / scale
         return F.grid_sample(new_x, grid, padding_mode="zeros", align_corners=False)
 
+class RandomPadResizeAug(nn.Module):
+    def __init__(self, pad_interval=(0, 10)):
+        super().__init__()
+        assert pad_interval[0] <= pad_interval[1] and pad_interval[0] >= 0
+        self.pad_interval = pad_interval
+        
+
+    def forward(self, x):
+        _, _, h, w = x.size()
+        # randomly pad left right top bottom of x with zeros
+        pad_left = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_right = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_top = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+        pad_bottom = torch.randint(self.pad_interval[0], self.pad_interval[1], size=(1,), device=x.device, dtype=torch.int64).item()
+
+        result = F.pad(x, (pad_left, pad_right, pad_top, pad_bottom), "constant", 0)
+
+        # resize result to original size
+        result = F.interpolate(result, size=(h, w), mode='nearest')
+
+        return result
 
 # identifier e
 augmentations = [
@@ -333,6 +354,7 @@ augmentations = [
     CombinedRandomShearingAug((-1 / 3, 1 / 3), (-1 / 3, 1 / 3)),
     RandomShearingAug("horizontal", (-1, 1)),
     RandomScaleAug((0.8, 1.25), False),
+    RandomPadResizeAug(pad_interval=(0,10)),
 ]
 
 

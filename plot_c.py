@@ -95,18 +95,16 @@ def plot_several_folders(
 
 
 tasks = ["acrobot_swingup", "reacher_hard", "walker_run"]
-feat_aug_ind = [2, 3, 4, 5, 6, 7]
-aug_folders = [f"aug1-feat_aug{i}" for i in feat_aug_ind]
+aug_ind = [1,2,3,4]
+aug_folders = [f"aug{i}" for i in aug_ind]
 labels = [
-    "lix",
+    "rand_shift",
     "rand_shear",
-    "rand_w_mean",
-    "rand_white",
-    "rand_pad_resize",
-    "rand_white_enhanced",
+    "rand_shear_original",
+    "none"
 ]
-title_identifier = "feat_map_aug_task"
-identifier = "e"
+title_identifier = "task"
+identifier = "c"
 for task in tasks:
     prefix = f"{identifier}-{task}/"
     title = f"{title_identifier}_{task}"
